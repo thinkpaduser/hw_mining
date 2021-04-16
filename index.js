@@ -20,14 +20,14 @@ const ethBalance = async address => {
 
 const minPayout = async address => {
     const url_prefix = 'https://api.nanopool.org/v1/eth/usersettings/';
-    const resp       = await req(`${url_prefix}${address}`);
+    const response   = await req(`${url_prefix}${address}`);
     const parsed     = JSON.parse(resp.body);
     return parsed.data.payout;
 };
 
 const avg6 = async address => {
 	const url_prefix = 'https://api.nanopool.org/v1/eth/avghashrate/';
-	const resp       = await req(`${url_prefix}${address}`);
+	const response   = await req(`${url_prefix}${address}`);
 	const parsed     = JSON.parse(resp.body);
 	return parsed.data.h6;
 };
@@ -38,7 +38,7 @@ const currencies = async () => {
     return JSON.parse(response.body);
 };
 
-const _process = dto => {
+const process = dto => {
 	return `У *${p.miner === 'me' ? 'thinkpaduser' : dto.miner}* уже *${dto.balance_data.balance}* ETH. Огоооо!\n` +
 		`*USD*: ${(dto.rates.data.price_usd * dto.balanceData.balance).toFixed(2)}\n` +
 		`*RUR*: ${(dto.rates.data.price_rur * dto.balanceData.balance).toFixed(2)}\n\n` +
@@ -53,6 +53,7 @@ const bot = new Telegraf(config.get('token'));
 bot.hears(/info (.*)/,  async ctx => {
     const m = ctx.match[1];
     const miner = m.toLowerCase();
+	
     if ( !isKnownMiner(miner) ) {
         ctx.reply('Нахуй съебал!');
         return;
@@ -62,13 +63,14 @@ bot.hears(/info (.*)/,  async ctx => {
     const avg6HashRate   = await avg6(knownMiners[miner]);
     const balanceData    = await ethBalance(knownMiners[miner]);
     const minPayout      = await minPayout(knownMiners[miner]);
-    ctx.replyWithMarkdown(_process({miner, minPayout, balanceData, rates, avg6HashRate}));
+	
+    ctx.replyWithMarkdown(process({miner, minPayout, balanceData, rates, avg6HashRate}));
 });
 
 bot.command('get', async ctx => {
 	const m = ctx.from.username;
 	const miner = m.toLowerCase();
-	console.log(`[${new Date()}] [${miner}] called 'get'`);
+
 	if ( !isKnownMiner(miner) ) {
 		ctx.reply('Нахуй съебал!');
 		return;
@@ -78,7 +80,8 @@ bot.command('get', async ctx => {
 	const balanceData    = await ethBalance(knownMiners[miner]);
         const avg6HashRate   = await avg6(knownMiners[miner]);
 	const minPayout      = await minPayout(knownMiners[miner]);
-	ctx.replyWithMarkdown(_process({miner, minPayout, balanceData, rates, avg6HashRate}));
+	
+	ctx.replyWithMarkdown(process({miner, minPayout, balanceData, rates, avg6HashRate}));
 });
 
 const _whatToDo = () => {
